@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../providers/orders_provider.dart' as ord;
 
@@ -113,11 +114,22 @@ class _OrderItemState extends State<OrderItem> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                         child: FlatButton(
-                          onPressed: () {
-                            setState(() {
-                              widget.order.setStatus(ord.Status.cancelled);
-                            });
-                            _expanded = !_expanded;
+                          onPressed: () async {
+                            try {
+                              await Provider.of<ord.OrdersProvider>(context,
+                                      listen: false)
+                                  .cancelOrder(
+                                      widget.order.id, ord.Status.cancelled);
+
+                              setState(() {
+                                widget.order.setStatus(ord.Status.cancelled);
+                              });
+                              _expanded = !_expanded;
+                            } catch (error) {
+                              Scaffold.of(context).showSnackBar(SnackBar(
+                                content: Text('Could not cancel order.'),
+                              ));
+                            }
                           },
                           child: Text('Cancel'),
                           textColor: Colors.white,

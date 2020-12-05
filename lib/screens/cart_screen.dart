@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:square_in_app_payments/in_app_payments.dart';
+import 'package:square_in_app_payments/models.dart' as square;
 
 import '../providers/cart.dart'
     show
@@ -18,61 +20,136 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   var _expanded = false;
+  var _isloading = false;
   DeliveryType checkedValue;
 
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
+    TextEditingController _addressController = TextEditingController();
+    String _address = '';
 
-    void makeOrder() {
+    Future<void> _payment() async {
+      await InAppPayments.setSquareApplicationId(
+          'sandbox-sq0idb-QpDqa6aohJOr89x6rKyuEQ');
+      await InAppPayments.startCardEntryFlow(
+        onCardNonceRequestSuccess: (square.CardDetails results) {
+          try {
+            InAppPayments.completeCardEntry(
+                onCardEntryComplete: () => print('yay'));
+          } on Exception catch (ex) {
+            print('there are problems');
+            InAppPayments.showCardNonceProcessingError(ex.toString());
+          }
+          cart.clear();
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              contentPadding: EdgeInsets.all(50),
+              content: Stack(
+                alignment: AlignmentDirectional.center,
+                children: [
+                  Transform.scale(
+                    scale: 2,
+                    child: FittedBox(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_sharp,
+                            color: Colors.green,
+                            size: 60.0,
+                          ),
+                          Text(
+                            'Your order was placed.',
+                            style: TextStyle(
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        onCardEntryCancel: () {},
+      );
+    }
+
+    void makeOrder() async {
       setState(() {
         checkedValue = DeliveryType.pickup;
+        _isloading = true;
       });
       Navigator.of(context).pop();
 
       if (cart.items.isNotEmpty) {
-        Provider.of<OrdersProvider>(context, listen: false).addOrder(
-          cart.grandTotal,
-          cart.items.values.toList(),
-          checkedValue,
-          Status.waiting,
-        );
-        cart.clear();
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            contentPadding: EdgeInsets.all(50),
-            content: Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                Transform.scale(
-                  scale: 2,
-                  child: FittedBox(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline_sharp,
-                          color: Colors.green,
-                          size: 60.0,
-                        ),
-                        Text(
-                          'Your order was placed.',
-                          style: TextStyle(
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        await Provider.of<OrdersProvider>(context, listen: false).addOrder(
+            cart.grandTotal,
+            cart.items.values.toList(),
+            checkedValue,
+            Status.waiting,
+            _address);
+        setState(() {
+          _isloading = false;
+        });
+        _payment();
       }
     }
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheet(
+              context: context,
+              builder: (ctx) {
+                return Container(
+                  padding: EdgeInsets.only(right: 8.0),
+                  height: MediaQuery.of(context).size.height * 0.4,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: TextField(
+                          decoration: InputDecoration(labelText: 'Location'),
+                          textInputAction: TextInputAction.done,
+                          controller: _addressController,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        children: [
+                          Spacer(),
+                          FlatButton(
+                            onPressed: () {
+                              Navigator.pop(
+                                  context, _addressController.value.text);
+                            },
+                            child: Text('Done'),
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).then((value) {
+            setState(() {
+              _address = value;
+            });
+          });
+        },
+        icon: Icon(Icons.room_outlined),
+        label: Text('Add Location'),
+        backgroundColor: Theme.of(context).primaryColor,
+      ),
       appBar: AppBar(
         title: Text('Your Cart'),
       ),
@@ -105,42 +182,46 @@ class _CartScreenState extends State<CartScreen> {
                           width: 20.0,
                         ),
                         FlatButton(
-                          onPressed: () {
-                            //Start of dialog
-                            showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                      title: Text(
-                                          'How will you collect your meal?'),
-                                      content: Text(
-                                          'Please select delivery if you want it delivered or in-store if you are coming in to pick it up.'),
-                                      actions: <Widget>[
-                                        FlatButton(
-                                          child: Text('In-store'),
-                                          onPressed: () {
-                                            setState(() {
-                                              checkedValue =
-                                                  DeliveryType.pickup;
-                                            });
-                                            makeOrder();
-                                          },
-                                        ),
-                                        FlatButton(
-                                          child: Text('Delivery'),
-                                          onPressed: () {
-                                            setState(() {
-                                              checkedValue =
-                                                  DeliveryType.delivery;
-                                            });
-                                            makeOrder();
-                                          },
-                                        ),
-                                      ],
-                                    ));
-                          },
+                          onPressed: (cart.grandTotal <= 0 || _isloading)
+                              ? null
+                              : () {
+                                  //Start of dialog
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            title: Text(
+                                                'How will you collect your meal?'),
+                                            content: Text(
+                                                'Please select delivery if you want it delivered or in-store if you are coming in to pick it up.'),
+                                            actions: <Widget>[
+                                              FlatButton(
+                                                child: Text('In-store'),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    checkedValue =
+                                                        DeliveryType.pickup;
+                                                  });
+                                                  makeOrder();
+                                                },
+                                              ),
+                                              FlatButton(
+                                                child: Text('Delivery'),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    checkedValue =
+                                                        DeliveryType.delivery;
+                                                  });
+                                                  makeOrder();
+                                                },
+                                              ),
+                                            ],
+                                          ));
+                                },
                           //End of alert dialog
 
-                          child: Text('Order Now'),
+                          child: _isloading
+                              ? CircularProgressIndicator()
+                              : Text('Order Now'),
                           textColor: Colors.white,
                           color: Theme.of(context).primaryColor,
                           shape: RoundedRectangleBorder(
@@ -265,15 +346,6 @@ class _CartScreenState extends State<CartScreen> {
                 );
               },
               itemCount: cart.items.length,
-            ),
-          ),
-          Card(
-            margin: EdgeInsets.all(15),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [],
-              ),
             ),
           ),
         ],

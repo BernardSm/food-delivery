@@ -14,6 +14,7 @@ class UserProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = Scaffold.of(context);
     return ListTile(
       title: Text(title),
       leading: GestureDetector(
@@ -54,12 +55,18 @@ class UserProductItem extends StatelessWidget {
                             ),
                             FlatButton(
                               child: Text('Remove'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                Provider.of<ProductsProvider>(
-                                  context,
-                                  listen: false,
-                                ).deleteProduct(id);
+                              onPressed: () async {
+                                try {
+                                  await Provider.of<ProductsProvider>(
+                                    context,
+                                    listen: false,
+                                  ).deleteProduct(id);
+                                  Navigator.of(context).pop();
+                                } catch (error) {
+                                  scaffold.showSnackBar(SnackBar(
+                                    content: Text('Deleting failed!'),
+                                  ));
+                                }
                               },
                             ),
                           ],

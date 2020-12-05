@@ -42,8 +42,8 @@ class CartItem extends StatelessWidget {
             context: context,
             builder: (context) => AlertDialog(
                   title: Text('About to delete item'),
-                  content:
-                      Text('Are you sure you want to remove the item from the cart?'),
+                  content: Text(
+                      'Are you sure you want to remove the item from the cart?'),
                   actions: <Widget>[
                     FlatButton(
                       child: Text('Cancel'),
@@ -85,7 +85,7 @@ class CartItem extends StatelessWidget {
                 label: Text(
                   '\$$price',
                   style: TextStyle(
-                    color: Theme.of(context).primaryTextTheme.title.color,
+                    color: Colors.white,
                   ),
                 ),
                 backgroundColor: Theme.of(context).primaryColor,
