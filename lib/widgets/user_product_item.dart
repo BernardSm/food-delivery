@@ -14,7 +14,7 @@ class UserProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scaffold = Scaffold.of(context);
+    final scaffold = ScaffoldMessenger.of(context);
     return ListTile(
       title: Text(title),
       leading: GestureDetector(
@@ -32,6 +32,7 @@ class UserProductItem extends StatelessWidget {
               icon: Icon(Icons.edit),
               color: Theme.of(context).primaryColor,
               onPressed: () {
+                // Sends menu item to screen to be edited
                 Navigator.of(context)
                     .pushNamed(EditProductScreen.routeName, arguments: id);
               },
@@ -40,37 +41,39 @@ class UserProductItem extends StatelessWidget {
               icon: Icon(Icons.delete),
               color: Theme.of(context).errorColor,
               onPressed: () {
+                // Confirm menu item delete dialogue
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('About to delete item'),
-                          content: Text(
-                              'Are you sure you want to delete this product?'),
-                          actions: <Widget>[
-                            FlatButton(
-                              child: Text('Cancel'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            FlatButton(
-                              child: Text('Remove'),
-                              onPressed: () async {
-                                try {
-                                  await Provider.of<ProductsProvider>(
-                                    context,
-                                    listen: false,
-                                  ).deleteProduct(id);
-                                  Navigator.of(context).pop();
-                                } catch (error) {
-                                  scaffold.showSnackBar(SnackBar(
-                                    content: Text('Deleting failed!'),
-                                  ));
-                                }
-                              },
-                            ),
-                          ],
-                        ));
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('About to delete menu item.'),
+                    content: Text(
+                        'Are you sure you want to delete this item from the menu?'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text('Remove'),
+                        onPressed: () async {
+                          try {
+                            await Provider.of<ProductsProvider>(
+                              context,
+                              listen: false,
+                            ).deleteProduct(id);
+                            Navigator.of(context).pop();
+                          } catch (error) {
+                            scaffold.showSnackBar(SnackBar(
+                              content: Text('Deleting failed!'),
+                            ));
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ],

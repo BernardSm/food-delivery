@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/orders_provider.dart' as ord;
+import '../providers/auth.dart';
 
 class OrderItem extends StatefulWidget {
   final ord.OrderItem order;
@@ -17,9 +18,12 @@ class OrderItem extends StatefulWidget {
 
 class _OrderItemState extends State<OrderItem> {
   var _expanded = false;
+  var _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
+    final userId = Provider.of<Auth>(context).userId;
+
     return Card(
       margin: EdgeInsets.all(10),
       child: Column(
@@ -29,38 +33,49 @@ class _OrderItemState extends State<OrderItem> {
             subtitle: Text(
               DateFormat('dd/MM/yyy hh:mm').format(widget.order.datetime),
             ),
-            leading: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                //If order is waiting to be accepted
-                if (widget.order.status == ord.Status.waiting)
-                  Icon(
-                    Icons.hourglass_top,
-                    color: Colors.yellow,
-                  ),
+            leading: _isLoading
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
+                        width: 20,
+                        height: 20,
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      //If order is waiting to be accepted
+                      if (widget.order.status == ord.Status.waiting)
+                        Icon(
+                          Icons.hourglass_top,
+                          color: Colors.yellow,
+                        ),
 
-                //If order is accepted
-                if (widget.order.status == ord.Status.processing)
-                  Icon(
-                    Icons.delivery_dining,
-                    color: Colors.indigo,
-                  ),
+                      //If order is accepted
+                      if (widget.order.status == ord.Status.processing)
+                        Icon(
+                          Icons.delivery_dining,
+                          color: Colors.indigo,
+                        ),
 
-                //If order is completed
-                if (widget.order.status == ord.Status.completed)
-                  Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green,
-                  ),
+                      //If order is completed
+                      if (widget.order.status == ord.Status.completed)
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green,
+                        ),
 
-                //If order is cancelled
-                if (widget.order.status == ord.Status.cancelled)
-                  Icon(
-                    Icons.block,
-                    color: Colors.red,
+                      //If order is cancelled
+                      if (widget.order.status == ord.Status.cancelled)
+                        Icon(
+                          Icons.block,
+                          color: Colors.red,
+                        ),
+                    ],
                   ),
-              ],
-            ),
             trailing: IconButton(
               icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
               onPressed: () {
@@ -113,31 +128,78 @@ class _OrderItemState extends State<OrderItem> {
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
-                        child: FlatButton(
-                          onPressed: () async {
-                            try {
-                              await Provider.of<ord.OrdersProvider>(context,
-                                      listen: false)
-                                  .cancelOrder(
-                                      widget.order.id, ord.Status.cancelled);
+                        child: widget.order.status == ord.Status.cancelled
+                            ? Container()
+                            : TextButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('About to cancel order'),
+                                      content: Text(
+                                          'Are you sure you want to cancel your order?'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text('No'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text('Yes'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            setState(() {
+                                              _isLoading = true;
+                                            });
+                                            try {
+                                              Provider.of<ord.OrdersProvider>(
+                                                      context,
+                                                      listen: false)
+                                                  .cancelOrder(
+                                                    userId!,
+                                                    widget.order.id,
+                                                    ord.Status.cancelled,
+                                                  )
+                                                  .then((value) => {
+                                                        setState(() {
+                                                          widget.order
+                                                              .setStatus(ord
+                                                                  .Status
+                                                                  .cancelled);
+                                                          _isLoading = false;
+                                                        })
+                                                      });
 
-                              setState(() {
-                                widget.order.setStatus(ord.Status.cancelled);
-                              });
-                              _expanded = !_expanded;
-                            } catch (error) {
-                              Scaffold.of(context).showSnackBar(SnackBar(
-                                content: Text('Could not cancel order.'),
-                              ));
-                            }
-                          },
-                          child: Text('Cancel'),
-                          textColor: Colors.white,
-                          color: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                                              _expanded = !_expanded;
+                                            } catch (error) {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    'Could not cancel order.'),
+                                              ));
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                child: Text('Cancel'),
+                                style: ButtonStyle(
+                                    foregroundColor:
+                                        MaterialStateProperty.all<Color>(
+                                            Colors.red),
+                                    textStyle:
+                                        MaterialStateProperty.all<TextStyle>(
+                                            TextStyle(color: Colors.white)),
+                                    shape: MaterialStateProperty.all<
+                                        OutlinedBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    )),
+                              ),
                       ),
                     ],
                   )

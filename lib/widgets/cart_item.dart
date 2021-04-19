@@ -11,11 +11,11 @@ class CartItem extends StatelessWidget {
   final double price;
 
   CartItem({
-    @required this.id,
-    @required this.productId,
-    @required this.title,
-    @required this.quantity,
-    @required this.price,
+    required this.id,
+    required this.productId,
+    required this.title,
+    required this.quantity,
+    required this.price,
   });
 
   @override
@@ -45,13 +45,13 @@ class CartItem extends StatelessWidget {
                   content: Text(
                       'Are you sure you want to remove the item from the cart?'),
                   actions: <Widget>[
-                    FlatButton(
+                    TextButton(
                       child: Text('Cancel'),
                       onPressed: () {
                         Navigator.of(context).pop(false);
                       },
                     ),
-                    FlatButton(
+                    TextButton(
                       child: Text('Remove'),
                       onPressed: () {
                         Navigator.of(context).pop(true);

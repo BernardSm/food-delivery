@@ -14,15 +14,15 @@ class OrderItem {
   final List<CartItem> products;
   final DateTime datetime;
   final DeliveryType deliveryType;
-  final String address;
-  Status status;
+  final String? address;
+  Status? status;
 
   OrderItem(
-      {@required this.id,
-      @required this.amount,
-      @required this.products,
-      @required this.datetime,
-      @required this.deliveryType,
+      {required this.id,
+      required this.amount,
+      required this.products,
+      required this.datetime,
+      required this.deliveryType,
       this.address,
       this.status});
 
@@ -43,12 +43,12 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> getOrders() async {
-    final url =
-        'https://food-delivery-4645c.firebaseio.com/orders/$userId.json?auth=$authToken';
+    final url = Uri.parse(
+        'https://food-delivery-4645c.firebaseio.com/orders/$userId.json?auth=$authToken');
     final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
     final extractedDate = json.decode(response.body) as Map<String, dynamic>;
-    if (extractedDate == null) {
+    if (extractedDate.isEmpty) {
       return;
     }
     extractedDate.forEach((orderedId, orderData) {
@@ -75,9 +75,9 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<void> addOrder(double total, List<CartItem> cartProducts, type,
-      Status s, String address) async {
-    final url =
-        'https://food-delivery-4645c.firebaseio.com/orders/$userId.json?auth=$authToken';
+      Status s, String? address) async {
+    final url = Uri.parse(
+        'https://food-delivery-4645c.firebaseio.com/orders/$userId.json?auth=$authToken');
     final timestamp = DateTime.now();
     final request = await http.post(url,
         body: json.encode({
@@ -116,11 +116,11 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> cancelOrder(String id, Status status) async {
-    final orderIndex = _orders.indexWhere((ord) => ord.id == id);
+  Future<void> cancelOrder(String userId, String orderId, Status status) async {
+    final orderIndex = _orders.indexWhere((ord) => ord.id == orderId);
     if (orderIndex >= 0) {
-      final url =
-          'https://food-delivery-4645c.firebaseio.com/orders/$id.json?auth=$authToken';
+      final url = Uri.parse(
+          'https://food-delivery-4645c.firebaseio.com/orders/$userId/$orderId.json?auth=$authToken');
       await http.patch(
         url,
         body: json.encode({

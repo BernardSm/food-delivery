@@ -41,17 +41,17 @@ class ProductsProvider with ChangeNotifier {
   // }
 
   Future<void> getProducts() async {
-    var url =
-        'https://food-delivery-4645c.firebaseio.com/products.json?auth=$authToken';
+    var url = Uri.parse(
+        'https://food-delivery-4645c.firebaseio.com/products.json?auth=$authToken');
     try {
       final response = await http.get(url);
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
-      if (extractedData == null) {
+      if (extractedData.isEmpty) {
         return;
       }
-      url =
-          'https://food-delivery-4645c.firebaseio.com/userFavorites/$userId.json?auth=$authToken';
+      url = Uri.parse(
+          'https://food-delivery-4645c.firebaseio.com/userFavorites/$userId.json?auth=$authToken');
       final favoriteResponse = await http.get(url);
       final favoriteData = json.decode(favoriteResponse.body);
       extractedData.forEach((prodId, prodData) {
@@ -75,8 +75,8 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> addProduct(Product value) async {
-    final url =
-        'https://food-delivery-4645c.firebaseio.com/products.json?auth=$authToken';
+    final url = Uri.parse(
+        'https://food-delivery-4645c.firebaseio.com/products.json?auth=$authToken');
     try {
       final response = await http.post(
         url,
@@ -106,8 +106,8 @@ class ProductsProvider with ChangeNotifier {
   Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
-      final url =
-          'https://food-delivery-4645c.firebaseio.com/products/$id.json?auth=$authToken';
+      final url = Uri.parse(
+          'https://food-delivery-4645c.firebaseio.com/products/$id.json?auth=$authToken');
       await http.patch(url,
           body: json.encode({
             'title': newProduct.title,
@@ -122,11 +122,11 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> deleteProduct(String productid) async {
-    final url =
-        'https://food-delivery-4645c.firebaseio.com/products/$productid.json?auth=$authToken';
+    final url = Uri.parse(
+        'https://food-delivery-4645c.firebaseio.com/products/$productid.json?auth=$authToken');
     final existingProductIndex =
         _items.indexWhere((prod) => prod.id == productid);
-    var existingProduct = _items[existingProductIndex];
+    Product? existingProduct = _items[existingProductIndex];
     _items.removeAt(existingProductIndex);
     notifyListeners();
 

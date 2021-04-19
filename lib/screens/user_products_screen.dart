@@ -21,6 +21,7 @@ class UserProductsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Products'),
         actions: <Widget>[
+          /* Button to add a new menu item*/
           IconButton(
               icon: Icon(Icons.add),
               onPressed: () {

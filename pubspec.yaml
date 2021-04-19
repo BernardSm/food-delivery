@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -27,16 +27,27 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.0
-  provider: ^4.3.2+2
-  intl: ^0.16.1
-  http: ^0.12.2
-  shared_preferences: ^0.5.12+4
-  square_in_app_payments: ^1.5.1
+  cupertino_icons: ^1.0.2
+  provider: ^5.0.0
+  intl: ^0.17.0
+  http: ^0.13.1
+  shared_preferences: ^2.0.5
+  square_in_app_payments: ^1.7.0
+  rive: ^0.7.2
+  flutter_launcher_icons: ^0.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "dev_assets/Logo.png"
+  adaptive_icon_background: "#E32A02"
+  adaptive_icon_foreground: "dev_assets/Logo.png"
+  remove_alpha_ios: true
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -53,6 +64,8 @@ flutter:
   assets:
     - assets/images/no orders.png
     - assets/images/mobile-logo.png
+    - assets/images/menu placeholder.png
+    - assets/food_app_loader.riv
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

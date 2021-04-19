@@ -21,13 +21,13 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   var _expanded = false;
   var _isloading = false;
-  DeliveryType checkedValue;
+  late DeliveryType checkedValue;
 
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     TextEditingController _addressController = TextEditingController();
-    String _address = '';
+    String? _address = '';
 
     Future<void> _payment() async {
       await InAppPayments.setSquareApplicationId(
@@ -99,52 +99,65 @@ class _CartScreenState extends State<CartScreen> {
       }
     }
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showModalBottomSheet(
-              context: context,
-              builder: (ctx) {
-                return Container(
-                  padding: EdgeInsets.only(right: 8.0),
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  child: Column(
+    void addAddress() {
+      showModalBottomSheet(
+          context: context,
+          builder: (ctx) {
+            return Container(
+              padding: EdgeInsets.only(right: 8.0),
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: TextField(
+                      decoration: InputDecoration(labelText: 'Location'),
+                      textInputAction: TextInputAction.done,
+                      controller: _addressController,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Row(
                     children: [
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Container(
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        child: TextField(
-                          decoration: InputDecoration(labelText: 'Location'),
-                          textInputAction: TextInputAction.done,
-                          controller: _addressController,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Spacer(),
-                          FlatButton(
-                            onPressed: () {
-                              Navigator.pop(
-                                  context, _addressController.value.text);
-                            },
-                            child: Text('Done'),
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ],
+                      Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          if (checkedValue != DeliveryType.delivery) {
+                            //print(checkedValue.toString());
+                            Navigator.pop(
+                                context, _addressController.value.text);
+                          }
+                          if (checkedValue == DeliveryType.delivery) {
+                            makeOrder();
+                          }
+                        },
+                        child: Text('Done'),
+                        style: ButtonStyle(
+                            foregroundColor: MaterialStateProperty.all<Color>(
+                          Theme.of(context).primaryColor,
+                        )),
                       ),
                     ],
                   ),
-                );
-              }).then((value) {
-            setState(() {
-              _address = value;
-            });
-          });
+                ],
+              ),
+            );
+          }).then((value) {
+        setState(() {
+          _address = value;
+        });
+      });
+    }
+
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          addAddress();
         },
         icon: Icon(Icons.room_outlined),
         label: Text('Add Location'),
@@ -181,9 +194,9 @@ class _CartScreenState extends State<CartScreen> {
                         SizedBox(
                           width: 20.0,
                         ),
-                        FlatButton(
-                          onPressed: (cart.grandTotal <= 0 || _isloading)
-                              ? null
+                        TextButton(
+                          onPressed: (cart.itemCount == 0 || _isloading)
+                              ? () {}
                               : () {
                                   //Start of dialog
                                   showDialog(
@@ -194,7 +207,7 @@ class _CartScreenState extends State<CartScreen> {
                                             content: Text(
                                                 'Please select delivery if you want it delivered or in-store if you are coming in to pick it up.'),
                                             actions: <Widget>[
-                                              FlatButton(
+                                              TextButton(
                                                 child: Text('In-store'),
                                                 onPressed: () {
                                                   setState(() {
@@ -204,14 +217,15 @@ class _CartScreenState extends State<CartScreen> {
                                                   makeOrder();
                                                 },
                                               ),
-                                              FlatButton(
+                                              TextButton(
                                                 child: Text('Delivery'),
                                                 onPressed: () {
                                                   setState(() {
                                                     checkedValue =
                                                         DeliveryType.delivery;
                                                   });
-                                                  makeOrder();
+                                                  Navigator.of(context).pop();
+                                                  addAddress();
                                                 },
                                               ),
                                             ],
@@ -222,11 +236,17 @@ class _CartScreenState extends State<CartScreen> {
                           child: _isloading
                               ? CircularProgressIndicator()
                               : Text('Order Now'),
-                          textColor: Colors.white,
-                          color: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                          style: ButtonStyle(
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                  Colors.white),
+                              shape: MaterialStateProperty.all<OutlinedBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                Theme.of(context).primaryColor,
+                              )),
                         ),
                         IconButton(
                           icon: Icon(_expanded

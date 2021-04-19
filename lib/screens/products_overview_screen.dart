@@ -40,12 +40,15 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Theme.of(context).accentColor),
         title: Text('QOCatering'),
         actions: <Widget>[
+          /* Button to go to cart screen*/
           Consumer<CartProvider>(
             builder: (_, cart, child) => Badge(
-              child: child,
+              child: child!,
               value: cart.itemCount.toString(),
+              color: Colors.white,
             ),
             child: IconButton(
               icon: Icon(Icons.shopping_cart),
@@ -53,6 +56,8 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
                   Navigator.of(context).pushNamed(CartScreen.routeName),
             ),
           ),
+
+          /* Button to toggle favorites*/
           PopupMenuButton(
             onSelected: (FilterOptions selectedVal) {
               setState(() {
@@ -76,6 +81,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
                 value: FilterOptions.All,
               )
             ],
+            color: Theme.of(context).accentColor,
           ),
         ],
       ),
